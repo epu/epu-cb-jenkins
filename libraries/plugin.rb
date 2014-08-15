@@ -126,14 +126,28 @@ EOH
         end
       end
 
+      if current_resource.version
+        Chef::Log.info("**** current_resource.version: #{current_resource.version} ****")
+      else
+        Chef::Log.info("**** current_resource.version: nil/false ****")
+      end
+      if new_resource.version
+        Chef::Log.info("**** new_resource.version: #{new_resource.version} ****")
+      else
+        Chef::Log.info("**** new_resource.version: nil/false ****")
+      end
+
       if current_resource.installed?
+        Chef::Log.info("**** current_resource.installed: true ****")
         if current_resource.version == new_resource.version ||
            new_resource.version.to_sym == :latest
-          Chef::Log.debug("#{new_resource} already installed - skipping")
+          Chef::Log.info("#{new_resource} already installed - skipping")
         else
+          Chef::Log.info("Upgrade #{new_resource} from #{current_resource.version} to #{new_resource.version}")
           converge_by("Upgrade #{new_resource} from #{current_resource.version} to #{new_resource.version}", &block)
         end
       else
+        Chef::Log.INFO("**** current_resource.installed: false ****")
         converge_by("Install #{new_resource}", &block)
       end
     end
