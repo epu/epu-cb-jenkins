@@ -74,18 +74,29 @@ EOH
 
     include Jenkins::Helper
 
+    # current_resource is the currently installed jenkins plugin.
     def load_current_resource
+      Chef::Log.info("**** inspect: new_resource ****")
+      Chef::Log.info(new_resource.inspect)
+      Chef::Log.info("*******************************")
       @current_resource ||= Resource::JenkinsPlugin.new(new_resource.name)
       @current_resource.source(new_resource.source)
       @current_resource.version(new_resource.version)
-
+      Chef::Log.info("load_current_resource: current_resource.name #{@current_resource.name}")
+      Chef::Log.info("load_current_resource: current_resource.source #{@current_resource.source}")
+      Chef::Log.info("load_current_resource: current_resource.version #{@current_resource.version}")
       if current_plugin
+        Chef::Log.info("**** inspect: current_plugin ****")
+        Chef::Log.info(current_plugin.inspect)
+        Chef::Log.info("*********************************")
         @current_resource.installed = true
         @current_resource.version(current_plugin[:plugin_version])
       else
         @current_resource.installed = false
       end
-
+      Chef::Log.info("**** inspect: current_resource ****")
+      Chef::Log.info(@current_resource.inspect)
+      Chef::Log.info("***********************************")
       @current_resource
     end
 
@@ -126,6 +137,60 @@ EOH
         end
       end
 
+      downgrade_block = proc do
+        # copy-pasted from uninstall code.
+        # There must be a better way to chain these. -epu
+        Resource::File.new(plugin_file, run_context).run_action(:delete)
+        directory = Resource::Directory.new(plugin_data_directory, run_context)
+        directory.recursive(true)
+        directory.run_action(:delete)
+        
+        # Downgrade logic doesn't work unless we generate a specific .source.
+        # -epu
+        unless new_resource.source
+          extracted_json = nil
+          #  http://updates.jenkins-ci.org/download/plugins/zubhium/0.1.6/zubhium.hpi
+          IO.readlines(update_center_json).map do |line|
+            extracted_json = line unless line == 'updateCenter.post(' || line == ');'
+          end
+          require 'json'
+          jenkins_update_center_data = JSON.parse(extracted_json)
+          url = jenkins_update_center_data['plugins'][new_resource.name]['url']
+          url.sub! current_resource.version, new_resource.version
+          Chef::Log.info("**** update_center_url: #{url}")
+          new_resource.source(url)
+        end
+        # Copy-pasted from upgrade/install code.
+        # There must be a better way to chain this. -epu
+
+        # Install a plugin from a given hpi (or jpi) if a link was provided.
+        # In that case jenkins does not handle plugin dependencies automatically.
+        # Otherwise the plugin is installed through the jenkins update-center
+        # (default behaviour). In that case plugin dependencies are handled by jenkins.
+        if new_resource.source
+          # Use the remote_file resource to download and cache the plugin (see
+          # comment below for more information).
+          name   = "#{new_resource.name}-#{new_resource.version}.plugin"
+          path   = ::File.join(Chef::Config[:file_cache_path], name)
+          plugin = Chef::Resource::RemoteFile.new(path, run_context)
+          plugin.source(new_resource.source)
+          plugin.backup(false)
+          plugin.run_action(:create)
+
+          # Install the plugin from our local cache on disk. There is a bug in
+          # Jenkins that prevents Jenkins from following 302 redirects, so we
+          # use Chef to download the plugin and then use Jenkins to install it.
+          # It's a bit backwards, but so is Jenkins.
+          executor.execute!('install-plugin', escape(plugin.path), '-name', escape(new_resource.name), new_resource.options)
+        else
+          # Install the plugin from the update-center. This results in the
+          # same behaviour as using the UI to install plugins.
+          # downgrades through this path are .. unsuccessful. This only ever installs latest.
+          Chef::Log.info("install-plugin #{new_resource.name} #{new_resource.options}")
+          executor.execute!('install-plugin', escape(new_resource.name), new_resource.options)
+        end
+      end
+
       if current_resource.version
         Chef::Log.info("**** current_resource.version: #{current_resource.version} ****")
       else
@@ -137,19 +202,35 @@ EOH
         Chef::Log.info("**** new_resource.version: nil/false ****")
       end
 
+      # This is a naive string comparison, not a semver comparison.
+      # See:
+      #==> default: [2014-08-18T17:01:02+00:00] INFO: **** current_resource.version: 1.16.1 ****
+      #==> default: [2014-08-18T17:01:02+00:00] INFO: **** new_resource.version: 1.9.4 ****
+      #==> default: [2014-08-18T17:01:02+00:00] INFO: **** current_resource.installed: true ****
+      #==> default: [2014-08-18T17:01:02+00:00] INFO: Upgrade jenkins_plugin[credentials] from 1.16.1 to 1.9.4
+
       if current_resource.installed?
         Chef::Log.info("**** current_resource.installed: true ****")
         if current_resource.version == new_resource.version ||
            new_resource.version.to_sym == :latest
           Chef::Log.info("#{new_resource} already installed - skipping")
         else
-          Chef::Log.info("Upgrade #{new_resource} from #{current_resource.version} to #{new_resource.version}")
-          converge_by("Upgrade #{new_resource} from #{current_resource.version} to #{new_resource.version}", &block)
+          ver1 = Gem::Version.new(current_resource.version)
+          ver2 = Gem::Version.new(new_resource.version)
+          if ver1 < ver2
+            Chef::Log.info("Upgrade #{new_resource} from #{current_resource.version} to #{new_resource.version}")
+            converge_by("Upgrade #{new_resource} from #{current_resource.version} to #{new_resource.version}", &block)
+          else
+            Chef::Log.info("Downgrade #{new_resource} from #{current_resource.version} to #{new_resource.version}")
+            converge_by("Downgrade #{new_resource} from #{current_resource.version} to #{new_resource.version}", &downgrade_block)
+          end
         end
       else
-        Chef::Log.INFO("**** current_resource.installed: false ****")
+        Chef::Log.info("**** current_resource.installed: false ****")
         converge_by("Install #{new_resource}", &block)
       end
+      # What bout the case of downgrading?!
+      # Not handled.
     end
 
     #
