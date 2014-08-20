@@ -38,7 +38,7 @@ class Chef
 
     # Attributes
     attribute :private_key,
-      kind_of: [String, OpenSSL::PKey::RSA],
+      kind_of: [String, OpenSSL::PKey::RSA, OpenSSL::PKey::DSA],
       required: true
     attribute :passphrase,
       kind_of: String
@@ -51,10 +51,21 @@ class Chef
     # @param [String] arg
     # @return [String]
     #
-    def rsa_private_key
+    def private_key_pem
       if private_key.is_a?(OpenSSL::PKey::RSA)
+        Chef::Log.debug("private_key: is a OpenSSL::PKey::RSA (ruby openssl object)")
         private_key.to_pem
+      elsif private_key.is_a?(OpenSSL::PKey::DSA)
+        Chef::Log.debug("private_key: is a OpenSSL::PKey::DSA (ruby openssl object)")
+        private_key.to_pem
+      elsif private_key =~ /-----BEGIN RSA PRIVATE KEY-----/
+        Chef::Log.debug("private_key: is text containing 'BEGIN RSA PRIVATE KEY' comment.")
+        OpenSSL::PKey::RSA.new(private_key).to_pem
+      elsif private_key =~ /-----BEGIN DSA PRIVATE KEY-----/
+        Chef::Log.debug("private_key: is text containing 'BEGIN DSA PRIVATE KEY' comment.")
+        OpenSSL::PKey::DSA.new(private_key).to_pem
       else
+        Chef::Log.debug("private_key: falling back to instantiate a new OpenSSL::PKey::RSA (ruby openssl object)")
         OpenSSL::PKey::RSA.new(private_key).to_pem
       end
     end
@@ -86,7 +97,7 @@ class Chef
         import com.cloudbees.plugins.credentials.*
         import com.cloudbees.jenkins.plugins.sshcredentials.impl.*
 
-        private_key = """#{new_resource.rsa_private_key}
+        private_key = """#{new_resource.private_key_pem}
         """
 
         credentials = new BasicSSHUserPrivateKey(
@@ -118,7 +129,8 @@ class Chef
 
       # Normalize the private key
       if @current_credentials && @current_credentials[:private_key]
-        @current_credentials[:private_key] = OpenSSL::PKey::RSA.new(@current_credentials[:private_key]).to_pem
+        # Handle DSA and RSA keys.
+        @current_credentials[:private_key] = @current_credentials.private_key_pem
       end
 
       @current_credentials
