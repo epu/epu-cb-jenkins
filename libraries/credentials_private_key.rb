@@ -51,22 +51,22 @@ class Chef
     # @param [String] arg
     # @return [String]
     #
-    def private_key_pem
-      if private_key.is_a?(OpenSSL::PKey::RSA)
+    def to_pem(key=private_key)
+      if key.is_a?(OpenSSL::PKey::RSA)
         Chef::Log.debug("private_key: is a OpenSSL::PKey::RSA (ruby openssl object)")
-        private_key.to_pem
-      elsif private_key.is_a?(OpenSSL::PKey::DSA)
+        key.to_pem
+      elsif key.is_a?(OpenSSL::PKey::DSA)
         Chef::Log.debug("private_key: is a OpenSSL::PKey::DSA (ruby openssl object)")
-        private_key.to_pem
-      elsif private_key =~ /-----BEGIN RSA PRIVATE KEY-----/
+        key.to_pem
+      elsif key =~ /-----BEGIN RSA PRIVATE KEY-----/
         Chef::Log.debug("private_key: is text containing 'BEGIN RSA PRIVATE KEY' comment.")
-        OpenSSL::PKey::RSA.new(private_key).to_pem
-      elsif private_key =~ /-----BEGIN DSA PRIVATE KEY-----/
+        OpenSSL::PKey::RSA.new(key).to_pem
+      elsif key =~ /-----BEGIN DSA PRIVATE KEY-----/
         Chef::Log.debug("private_key: is text containing 'BEGIN DSA PRIVATE KEY' comment.")
-        OpenSSL::PKey::DSA.new(private_key).to_pem
+        OpenSSL::PKey::DSA.new(key).to_pem
       else
         Chef::Log.debug("private_key: falling back to instantiate a new OpenSSL::PKey::RSA (ruby openssl object)")
-        OpenSSL::PKey::RSA.new(private_key).to_pem
+        OpenSSL::PKey::RSA.new(key).to_pem
       end
     end
   end
@@ -97,7 +97,7 @@ class Chef
         import com.cloudbees.plugins.credentials.*
         import com.cloudbees.jenkins.plugins.sshcredentials.impl.*
 
-        private_key = """#{new_resource.private_key_pem}
+        private_key = """#{new_resource.to_pem}
         """
 
         credentials = new BasicSSHUserPrivateKey(
@@ -130,7 +130,7 @@ class Chef
       # Normalize the private key
       if @current_credentials && @current_credentials[:private_key]
         # Handle DSA and RSA keys.
-        @current_credentials[:private_key] = @current_credentials.private_key_pem
+        @current_credentials[:private_key] = @current_resource.to_pem(key=@current_credentials[:private_key])
       end
 
       @current_credentials
