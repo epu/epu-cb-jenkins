@@ -1,6 +1,18 @@
-jenkins Cookbook CHANGELOG
+epu-cb-jenkins Cookbook CHANGELOG
 ==========================
 This file is used to list changes made in each version of the jenkins cookbook.
+
+v2.1.3 (2014-08-22)
+-------------------
+** FORK opscode/jenkins.
+- 'Fix' opscode/jenkins versioned plugin deployment on ubuntu (github #260).
+ + This doesn't pass test kitchen, because server currently needs a restart.
+   Without the restart, the jpi is not extracted, and plugin config tests fail.
+   Solution is to unzip the plugin after install, but it's not implemented.
+- Add DSA private key support (no github issue).
+ + In the worst way. It's not a very nice factory.
+   Also, the 'cast to string' logic confuses me in the first place.
+   But I don't have enough ruby in me to do 'private data, accessor method'.
 
 v2.1.2 (2014-07-02)
 -------------------
