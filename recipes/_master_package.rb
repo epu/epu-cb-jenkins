@@ -25,6 +25,8 @@ case node['platform_family']
 when 'debian'
   include_recipe 'apt::default'
 
+  # See also http://pkg.jenkins-ci.org/debian-stable
+  # -epu
   apt_repository 'jenkins' do
     uri          'http://pkg.jenkins-ci.org/debian'
     distribution 'binary/'
@@ -37,7 +39,16 @@ when 'debian'
       pin_priority '1001'
       notifies :run, 'execute[apt-get-update]', :immediately
     end
+    # would be nice to use /var/cache/apt/archives by default.
+    # But, is this overridable? Welp. Throw it in the cache anyways.
+    jenkins_deb_name = "jenkins_#{node['jenkins']['master']['version']}_all.deb"
+    remote_file "/var/cache/apt/archives/#{jenkins_deb_name}" do
+      source "http://pkg.jenkins-ci.org/debian/binary/#{jenkins_deb_name}"
+      # The jenkins Packages definition doesn't include release information for its historical debs, only the latest.
+      # That means, there is no secure way to update to a specific release because its checksums are lost to time.
+    end
   end
+  
   
   package 'jenkins' do
     version node['jenkins']['master']['version']
