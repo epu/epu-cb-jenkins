@@ -44,15 +44,22 @@ when 'debian'
     jenkins_deb_name = "jenkins_#{node['jenkins']['master']['version']}_all.deb"
     remote_file "/var/cache/apt/archives/#{jenkins_deb_name}" do
       source "http://pkg.jenkins-ci.org/debian/binary/#{jenkins_deb_name}"
+      mode "00644"
+      # checksum ""
       # The jenkins Packages definition doesn't include release information for its historical debs, only the latest.
       # That means, there is no secure way to update to a specific release because its checksums are lost to time.
+    end
+    dpkg_package 'jenkins' do
+      version node['jenkins']['master']['version']
+      source "/var/cache/apt/archives/#{jenkins_deb_name}"
+    end
+  else
+    package 'jenkins' do
+      version node['jenkins']['master']['version']
     end
   end
   
   
-  package 'jenkins' do
-    version node['jenkins']['master']['version']
-  end
 
   template '/etc/default/jenkins' do
     source   'jenkins-config-debian.erb'
