@@ -28,7 +28,7 @@
 
 # Gracefully handle the failure for an invalid installation type
 begin
-  include_recipe "jenkins::_master_#{node['jenkins']['master']['install_method']}"
+  include_recipe "epu-cb-jenkins::_master_#{node['jenkins']['master']['install_method']}"
 rescue Chef::Exceptions::RecipeNotFound
   raise Chef::Exceptions::RecipeNotFound, "The install method " \
     "`#{node['jenkins']['master']['install_method']}' is not supported by " \

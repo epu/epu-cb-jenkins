@@ -31,6 +31,14 @@ when 'debian'
     key          'https://jenkins-ci.org/debian/jenkins-ci.org.key'
   end
 
+  if node['jenkins']['master']['version'] != nil
+    apt_preference 'jenkins' do
+      pin          "version #{node['jenkins']['master']['version']}"
+      pin_priority '1001'
+      notifies :run, 'execute[apt-get-update]', :immediately
+    end
+  end
+  
   package 'jenkins' do
     version node['jenkins']['master']['version']
   end
