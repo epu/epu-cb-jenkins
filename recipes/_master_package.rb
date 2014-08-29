@@ -24,7 +24,6 @@
 case node['platform_family']
 when 'debian'
   include_recipe 'apt::default'
-
   # See also http://pkg.jenkins-ci.org/debian-stable
   # -epu
   apt_repository 'jenkins' do
@@ -34,6 +33,11 @@ when 'debian'
   end
 
   if node['jenkins']['master']['version'] != nil
+    # http://tickets.opscode.com/browse/CHEF-3077
+    # The Chef10 and 11 apt package/deb package support
+    # doesn't automagically install debian .deb deps. :(
+    # 
+    include_recipe 'gdebi::default'
     apt_preference 'jenkins' do
       pin          "version #{node['jenkins']['master']['version']}"
       pin_priority '1001'
@@ -49,7 +53,7 @@ when 'debian'
       # The jenkins Packages definition doesn't include release information for its historical debs, only the latest.
       # That means, there is no secure way to update to a specific release because its checksums are lost to time.
     end
-    dpkg_package 'jenkins' do
+    gdebi_package 'jenkins' do
       version node['jenkins']['master']['version']
       source "/var/cache/apt/archives/#{jenkins_deb_name}"
     end

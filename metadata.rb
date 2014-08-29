@@ -9,5 +9,6 @@ version          '2.1.3'
 recipe 'master', 'Installs a Jenkins master'
 
 depends 'apt',   '~> 2.0'
+depends 'gdebi', '~> 1.1'
 depends 'runit', '~> 1.5'
 depends 'yum',   '~> 3.0'
