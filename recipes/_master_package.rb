@@ -52,6 +52,8 @@ when 'debian'
       # checksum ""
       # The jenkins Packages definition doesn't include release information for its historical debs, only the latest.
       # That means, there is no secure way to update to a specific release because its checksums are lost to time.
+      # Don't download it if you already have it installed
+      not_if "dpkg -s jenkins 2>&1 | grep \"Version: #{node['jenkins']['master']['version']}\""
     end
     package 'jenkins' do
       # Remove jenkins if it's been installed and isn't the matching version.
@@ -63,6 +65,7 @@ when 'debian'
     gdebi_package 'jenkins' do
       version node['jenkins']['master']['version']
       source "/var/cache/apt/archives/#{jenkins_deb_name}"
+      not_if "dpkg -s jenkins 2>&1 | grep \"Version: #{node['jenkins']['master']['version']}\""
     end
   else
     package 'jenkins' do
