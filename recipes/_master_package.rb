@@ -59,7 +59,7 @@ when 'debian'
       # Remove jenkins if it's been installed and isn't the matching version.
       # This lets us now handle the case of downgrades.
       # Technically, it would be better to do a semantic version compare, because upgrades work fine.
-      action :purge  # :remove yields a prompt, because we have ourselves modified the init script.
+      action :remove  # :remove yields a prompt, because we have ourselves modified the init script.
       not_if "dpkg -s jenkins 2>&1 | grep \"Version: #{node['jenkins']['master']['version']}\""
     end
     gdebi_package 'jenkins' do

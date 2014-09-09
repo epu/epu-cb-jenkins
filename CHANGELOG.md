@@ -1,8 +1,12 @@
 epu-cb-jenkins Cookbook CHANGELOG
 ==========================
 This file is used to list changes made in each version of the jenkins cookbook.
-v2.1.4 (2014-08-29
+v2.1.5 (2014-09-09)
 -------------------
+- 'Fix' downgrades of .deb with purge/install
+
+ v2.1.4 (2014-08-29)
+--------------------
 - 'Fix' opscode/jenkins versioned jenkins .deb deployment on ubuntu (no github issue).
  + no tests, less secure (.deb has no md5 from mirror provider)
  + adds apt-pin to .deb installed version, when you install a specific version.
