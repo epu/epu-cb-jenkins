@@ -59,13 +59,16 @@ when 'debian'
       # Remove jenkins if it's been installed and isn't the matching version.
       # This lets us now handle the case of downgrades.
       # Technically, it would be better to do a semantic version compare, because upgrades work fine.
-      action :remove
+      action :purge  # :remove yields a prompt, because we have ourselves modified the init script.
       not_if "dpkg -s jenkins 2>&1 | grep \"Version: #{node['jenkins']['master']['version']}\""
     end
     gdebi_package 'jenkins' do
       version node['jenkins']['master']['version']
+      #provider = Chef::Provider::Package::Dpkg # <= this doesn't work if you have a package object from before.
+      # If you chose to modify contents of the package, the only way to correctly pass options to dpkg
+      # (for example, keep config'd file) is a fragment in /etc/dpkg
+      # Gdebi doesn't like to pass dpkg options, apparently, but will let you set them all day long. -epu
       source "/var/cache/apt/archives/#{jenkins_deb_name}"
-      not_if "dpkg -s jenkins 2>&1 | grep \"Version: #{node['jenkins']['master']['version']}\""
     end
   else
     package 'jenkins' do
