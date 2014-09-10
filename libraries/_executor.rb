@@ -106,6 +106,7 @@ module Jenkins
       file = Tempfile.new('groovy')
       file.write script
       file.flush
+      Chef::Log.debug("Executing groovy script! Contents:\n%s\n" % script)
       execute!("groovy #{file.path}")
     ensure
       file.close! if file
@@ -120,6 +121,7 @@ module Jenkins
       file = Tempfile.new('groovy')
       file.write script
       file.flush
+      Chef::Log.debug("Executing groovy script. Contents:\n%s\n" % script)
       execute("groovy #{file.path}")
     ensure
       file.close! if file
