@@ -54,7 +54,7 @@ class Chef
     #
     # * username which maps to a valid Jenkins credentials instance.
     # * UUID of a Jenkins credentials instance.
-    # * A `Chef::Resource::JenkinsCredentials` instnace.
+    # * A `Chef::Resource::JenkinsCredentials` instance.
     #
     # @return [String]
     #
