@@ -14,7 +14,7 @@ Requirements
 - Chef 11 or higher
 - **Ruby 1.9.3 or higher**
 
-Public Service Announcment
+Public Service Announcments
 ----------------------------
 If you are using jenkins with authentication:  until [JENKINS-22346](https://issues.jenkins-ci.org/browse/JENKINS-22346) is fixed, pin to version 1.555 of jenkins and use the `war` installation method:
 
@@ -25,6 +25,14 @@ node.default['jenkins']['master']['source'] = "#{node['jenkins']['master']['mirr
 ```
 
 JENKINS-22346 affects the `jenkins-cli` command, whose use by this cookbook is described in the Caveats section under Authentication.
+
+If you are using linux slaves: until [opscode/jenkins #172] (https://github.com/opscode-cookbooks/jenkins/issues/172) is fixed, pin ssh-credentials plugin to version 1.5.
+
+```ruby
+jenkins_plugin 'ssh-credentials' do
+  version '1.5'
+end
+```
 
 Attributes
 ----------
