@@ -27,9 +27,9 @@ when 'debian'
   # See also http://pkg.jenkins-ci.org/debian-stable
   # -epu
   apt_repository 'jenkins' do
-    uri          'http://pkg.jenkins-ci.org/debian'
-    distribution 'binary/'
-    key          'https://jenkins-ci.org/debian/jenkins-ci.org.key'
+    uri          "#{node['jenkins']['master']['apt']['uri']}"
+    distribution "#{node['jenkins']['master']['apt']['distribution']}"
+    key          "#{node['jenkins']['master']['apt']['key']}"
   end
 
   if node['jenkins']['master']['version'] != nil
@@ -47,7 +47,7 @@ when 'debian'
     # But, is this overridable? Welp. Throw it in the cache anyways.
     jenkins_deb_name = "jenkins_#{node['jenkins']['master']['version']}_all.deb"
     remote_file "/var/cache/apt/archives/#{jenkins_deb_name}" do
-      source "http://pkg.jenkins-ci.org/debian/binary/#{jenkins_deb_name}"
+      source "#{node['jenkins']['master']['apt']['uri']}/#{node['jenkins']['master']['apt']['distribution']}#{jenkins_deb_name}"
       mode "00644"
       # checksum ""
       # The jenkins Packages definition doesn't include release information for its historical debs, only the latest.

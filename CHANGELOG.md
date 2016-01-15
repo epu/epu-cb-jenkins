@@ -1,6 +1,19 @@
 epu-cb-jenkins Cookbook CHANGELOG
 ==========================
 This file is used to list changes made in each version of the jenkins cookbook.
+
+v2.1.7 (2016-01-15)
+-------------------
+- Expose attributes for changing the debian apt package repository uri.
+ + This allows users to specify their own debian repository or mirror, and switch to
+   the LTS release stream (set by default).
+
+   See https://issues.jenkins-ci.org/browse/WEBSITE-76 and related issues.
+   Some older packages have been truncated or made unavailable.
+   
+   http://archives.jenkins-ci.org is unreliable or throttled, which directly impacts pkg.jenkins-ci.org and
+   mirrors.jenkins-ci.org.
+
 v2.1.5 (2014-09-09)
 -------------------
 - 'Fix' downgrades of .deb with purge/install

@@ -174,4 +174,17 @@ default['jenkins']['master'].tap do |master|
   #   node.set['jenkins']['master']['log_directory'] = '/var/log/jenkins'
   #
   master['log_directory'] = '/var/log/jenkins'
+
+  #
+  # The apt repository uri and distribution for Jenkins deb packages.
+  # **This attribute is only used by debian distro packaged installers**.
+  #
+  # Users might be using a local mirror or apt repository,
+  # caching artifactory service, etc.
+  #
+  # We default to the LTS releases,
+  # but one could also select http://pkg.jenkins-ci.org/debian
+  master['apt']['uri'] = 'http://pkg.jenkins-ci.org/debian-stable'
+  master['apt']['distribution'] = 'binary/'
+  master['apt']['key'] = 'https://jenkins-ci.org/debian/jenkins-ci.org.key'
 end
