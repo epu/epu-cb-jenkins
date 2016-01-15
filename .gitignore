@@ -13,6 +13,7 @@
 .yardopts
 Berksfile.lock
 Gemfile.lock
+.project
 
 .bundle/
 .cache/
